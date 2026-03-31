@@ -55,16 +55,16 @@ To run ICEfinder with the local virtual environment without activating it:
 ./run.sh -i example/input_demo/CP003200.1.gb -t Single
 ```
 
-Convenience wrappers for the bundled demos:
+Convenience wrappers:
 ```bash
-./run-single-demo.sh example/input_demo/CP003200.1.gb
-./run-metagenome-demo.sh example/input_demo/SRS146999.fna
+./run-single.sh example/input_demo/CP003200.1.gb
+./run-metagenome.sh example/input_demo/SRS146999.fna
 ```
 
 The wrappers keep the type fixed, but the input file is required:
 ```bash
-./run-single-demo.sh path/to/genome.gb
-./run-metagenome-demo.sh path/to/metagenome.fna
+./run-single.sh path/to/genome.gb
+./run-metagenome.sh path/to/metagenome.fna
 ```
 
 To test and get familiar with the ICEfinder, you can test the demo files we provide in the 'example/input_demo' directory,
@@ -169,3 +169,25 @@ If you have any question for ICEfinder 2.0, please feel free to contact the auth
 
 - hyou@sjtu.edu.cn
 - m.wang@sjtu.edu.cn
+
+## Local Patches
+
+The following patches were applied on top of the original upstream code to make the local clone runnable on this machine:
+
+- Switched the Python entrypoint shebangs and CLI usage examples to `python3`.
+Reason: the original scripts pointed to hard-coded interpreter paths that do not exist here, and the system `python` is Python 2.7.
+
+- Added `script/bio_compat.py` and replaced direct use of `Bio.SeqUtils.GC` with a compatibility helper based on `gc_fraction` when available.
+Reason: recent Biopython versions removed `GC`, which caused the program to fail at import time.
+
+- Replaced the deprecated Biopython BLAST command wrappers in `script/function.py` with direct `subprocess` calls.
+Reason: this removes dependency on deprecated `Bio.Blast.Applications` wrappers and keeps BLAST invocation explicit.
+
+- Fixed the startup bug in `ICEfinder2.py` where missing `tmp/fasta` caused the code to create `tmp/gbk` a second time instead of creating `tmp/fasta`.
+Reason: the original code could fail immediately with `FileExistsError` before starting the analysis.
+
+- Fixed the symbiosis BLAST call in `script/function.py` to use the protein FASTA input with `blastp` instead of the nucleotide FASTA input.
+Reason: the original code passed an `.ffn` file to `blastp`, which is inconsistent and can produce invalid results.
+
+- Updated the `defense-finder` invocation in `script/function.py` to run via `subprocess` with `.venv/bin` added to `PATH`.
+Reason: `defense-finder` calls `macsyfinder` internally, and the original environment did not expose that executable when ICEfinder was launched via the local virtualenv.
