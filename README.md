@@ -52,21 +52,39 @@ uv venv .venv
 uv pip install --python .venv/bin/python --prerelease=allow -r requirements.txt
 ```
 
-To run ICEfinder with the local virtual environment without activating it:
-```bash
-./run.sh -i example/input_demo/CP003200.1.gb -t Single
-```
+To run ICEfinder with the local virtual environment without activating it, use the wrappers below.
 
 Convenience wrappers:
 ```bash
-./run-single.sh example/input_demo/CP003200.1.gb
+./run-single.py example/input_demo/CP003200.1.gb
 ./run-metagenome.sh example/input_demo/SRS146999.fna
 ```
 
 The wrappers keep the type fixed, but the input file is required:
 ```bash
-./run-single.sh path/to/genome.gb
+./run-single.py path/to/genome.gb
 ./run-metagenome.sh path/to/metagenome.fna
+```
+
+`run-single.py` is a local Python/Biopython wrapper. If the input FASTA or GenBank file contains multiple records/contigs, it will:
+
+1. detect the input format,
+2. split the file into one single-sequence FASTA/GenBank work-input per record,
+3. save those work inputs under a dedicated output directory in `result/`,
+4. assign short internal filenames for ICEfinder/Prokka compatibility,
+5. run the standard `Single` flow once for each split input,
+6. log the operations to `run-single.log`,
+7. store the per-record ICEfinder outputs under the same output directory,
+8. write a `no_hits.txt` marker for contigs with an empty `*_ICEsum.json`,
+9. keep the mapping between original contig IDs and internal run IDs in `manifest.json`.
+
+The output layout is:
+```text
+result/<input_stem>__single_wrapper*/
+  manifest.json
+  run-single.log
+  work_inputs/
+  runs/
 ```
 
 To test and get familiar with the ICEfinder, you can test the demo files we provide in the 'example/input_demo' directory,
@@ -193,3 +211,12 @@ Reason: the original code passed an `.ffn` file to `blastp`, which is inconsiste
 
 - Updated the `defense-finder` invocation in `script/function.py` to run via `subprocess` with `.venv/bin` added to `PATH`.
 Reason: `defense-finder` calls `macsyfinder` internally, and the original environment did not expose that executable when ICEfinder was launched via the local virtualenv.
+
+- Reworked `run-single.py` into a Python/Biopython wrapper that splits multi-record FASTA/GenBank inputs into per-record work files and runs the `Single` flow once per split input.
+Reason: the original `Single` code accepts only one sequence record, while draft assemblies may contain multiple contigs that still need to be processed through the `Single` pipeline one contig at a time.
+
+- Updated `run-single.py` to create short internal run IDs and work-input filenames for each split record.
+Reason: the original `Single` path renames FASTA record IDs to the basename of the input file, and long split basenames can make Prokka reject the contig name length.
+
+- Updated `run-single.py` to write `no_hits.txt` for contig-level runs whose `*_ICEsum.json` is empty.
+Reason: this makes it explicit that the absence of HTML/gene-detail files means "no called ICE/IME for this contig", not a wrapper failure.
