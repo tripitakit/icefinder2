@@ -14,6 +14,8 @@ ICEfinder 2.0 - Detecting Integrative and Conjugative Elements in Bacteria.
 
 The local version of ICEfinder2 has been tested in CentOS Linux release 7.7.1908.
 
+This local clone was also tested on Ubuntu 20.04 with the patches documented at the end of this README.
+
 To install ICEfinder2, just download the file 'ICEfinder2_linux.tar.gz' from the 'Download' [webpage](https://tool2-mml.sjtu.edu.cn/ICEberg3/Download.html) and then decompress it:
 
 ```bash
