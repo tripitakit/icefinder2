@@ -1,5 +1,7 @@
 .venv/
 result/
 tmp/
+input/
+.directory
 __pycache__/
 *.pyc
