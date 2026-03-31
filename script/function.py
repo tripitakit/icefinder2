@@ -1,18 +1,16 @@
-#!/public/wangm/miniconda3/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os,time,json
+import os,time,json,subprocess
 from Bio import SeqIO
-from Bio.SeqUtils import GC
 from script.config import get_param
-from Bio.Blast.Applications import NcbiblastpCommandline
-from Bio.Blast.Applications import NcbiblastnCommandline
 
 param = get_param()
 workdir = param[0]
 defensefinder = param[3]
 blastp = param[4]
 blastn = param[5]
+macsyfinder = param[9]
 
 tmp_dir = os.path.join(workdir,'tmp')
 gb_dir = os.path.join(tmp_dir,'gbk')
@@ -23,6 +21,22 @@ arg_Database = os.path.join(workdir,'data','resfinder')
 metal_Database = os.path.join(workdir,'data','metal')
 pop_Database = os.path.join(workdir,'data','degradation')
 sym_Database = os.path.join(workdir,'data','symbiosis')
+
+def _run_blast(command, query_file, database, output_file):
+
+	cmd = [
+		command,
+		'-query', query_file,
+		'-db', database,
+		'-evalue', '0.0001',
+		'-num_threads', '20',
+		'-max_hsps', '1',
+		'-num_descriptions', '1',
+		'-num_alignments', '1',
+		'-outfmt', '6 std slen stitle',
+		'-out', output_file,
+	]
+	subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 ##### Test
 ##### Not used
@@ -101,8 +115,22 @@ def getdf(runID):
 		infaa = os.path.join(tmp_dir,runID,runID+'.locus_tag.faa')
 
 	dfout = os.path.join(tmp_dir,runID,'defense_'+runID)
-	defcmd = [defensefinder, 'run', '-w 8 --models-dir ./data/macsydata/','-o', dfout, infaa, '> /dev/null']
-	os.system(' '.join(defcmd))
+	env = os.environ.copy()
+	path_entries = [
+		os.path.dirname(defensefinder),
+		os.path.dirname(macsyfinder),
+		env.get('PATH', ''),
+	]
+	env['PATH'] = os.pathsep.join([entry for entry in path_entries if entry])
+	defcmd = [
+		defensefinder,
+		'run',
+		'-w', '8',
+		'--models-dir', './data/macsydata/',
+		'-o', dfout,
+		infaa,
+	]
+	subprocess.run(defcmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
 
 	dfdict = {}
 	with open(os.path.join(dfout,'defense_finder_genes.tsv')) as dfres:
@@ -114,40 +142,22 @@ def getdf(runID):
 	return dfdict
 
 def isblast(faa_file,IS_out):
-	blastp_cline = NcbiblastpCommandline(cmd=blastp, query=faa_file, db=IS_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=IS_out)
-	blastp_cline()
+	_run_blast(blastp, faa_file, IS_Database, IS_out)
 
 def vfblast(faa_file,VF_out):
-	blastp_cline = NcbiblastpCommandline(cmd=blastp, query=faa_file, db=VF_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=VF_out)
-	blastp_cline()
+	_run_blast(blastp, faa_file, VF_Database, VF_out)
 
 def argblast(fa_file,arg_out):
-	blastp_cline = NcbiblastnCommandline(cmd=blastn, query=fa_file, db=arg_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=arg_out)
-	blastp_cline()
+	_run_blast(blastn, fa_file, arg_Database, arg_out)
 
 def metalblast(faa_file,metal_out):
-	blastp_cline = NcbiblastpCommandline(cmd=blastp, query=faa_file, db=metal_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=metal_out)
-	blastp_cline()
+	_run_blast(blastp, faa_file, metal_Database, metal_out)
 
 def popblast(faa_file,pop_out):
-	blastp_cline = NcbiblastpCommandline(cmd=blastp, query=faa_file, db=pop_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=pop_out)
-	blastp_cline()
+	_run_blast(blastp, faa_file, pop_Database, pop_out)
 
 def symblast(faa_file,sym_out):
-	blastp_cline = NcbiblastpCommandline(cmd=blastp, query=faa_file, db=sym_Database, \
-                       evalue=0.0001, num_threads=20, max_hsps=1, num_descriptions=1, \
-                       num_alignments=1, outfmt="6 std slen stitle", out=sym_out)
-	blastp_cline()
+	_run_blast(blastp, faa_file, sym_Database, sym_out)
 
 def havalue(value,out):
 
@@ -182,7 +192,7 @@ def getblast(runID):
 
 	metalblast(infaa,metal_out)
 	popblast(infaa,pop_out)
-	symblast(infa,sym_out)
+	symblast(infaa,sym_out)
 
 	isdict = havalue('0.64',is_out)
 	vfdict = havalue('0.64',vf_out)
@@ -194,7 +204,4 @@ def getblast(runID):
 	dfdict = getdf(runID)
 
 	return argdict,vfdict,isdict,dfdict,metaldict,popdict,symdict
-
-
-
 

@@ -1,4 +1,4 @@
-#!/public/wangm/miniconda3/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os,sys,shutil

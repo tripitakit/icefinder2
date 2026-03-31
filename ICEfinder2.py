@@ -1,4 +1,4 @@
-#!/public/software/miniconda3/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # ICEfinder: Detecting Integrative and Conjugative Elements in Bacteria.
@@ -31,7 +31,7 @@ def add_arguments_to_parser(parser):
 
 if __name__ == "__main__":
 
-	parser = argparse.ArgumentParser(description='ICEfinder', usage='python ICEfinder.py -i fasta_file/genbank_file -t Single/Metagenome',
+	parser = argparse.ArgumentParser(description='ICEfinder', usage='python3 ICEfinder2.py -i fasta_file/genbank_file -t Single/Metagenome',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	add_arguments_to_parser(parser)
 	args = parser.parse_args()
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 	if not os.path.exists(gb_dir):
 		os.mkdir(gb_dir)
 	if not os.path.exists(fa_dir):
-		os.mkdir(gb_dir)
+		os.mkdir(fa_dir)
 
 	runID = file_name_without_extension = os.path.splitext(os.path.basename(input_file))[0]
 

@@ -1,4 +1,4 @@
-#!/public/wangm/miniconda3/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os,time
@@ -6,8 +6,8 @@ import random,json
 import string,shutil
 from Bio import SeqIO
 from ete3 import NCBITaxa
-from Bio.SeqUtils import GC
 from functools import cmp_to_key
+from script.bio_compat import gc_percent
 from script.function import getblast
 from script.config import get_param
 
@@ -146,7 +146,7 @@ def gc(fasta_file,start,end):
 
 	record = SeqIO.read(fasta_file, "fasta")
 	sequence = record.seq[start-1:end]
-	gcs = str("%.2f"%GC(sequence))
+	gcs = str("%.2f"%gc_percent(sequence))
 
 	return gcs
 
@@ -163,7 +163,7 @@ def calculate_gc(fasta_file, start, end, window_size, step_size):
 	j = start/1000 + 0.025
 	for i in range(0, len(sequence) - window_size + 1, step_size):
 		window = sequence[i:i+window_size]
-		gc_content = GC(window)
+		gc_content = gc_percent(window)
 		gc_contents.append(gc_content)
 		pos.append(round(j, 4))
 		j += 0.05

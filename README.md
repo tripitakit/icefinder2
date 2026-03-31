@@ -36,9 +36,40 @@ ICEfinder2 also relies on Python library dependencies:
 Biopython
 ete3
 
+For a local Python environment without Conda:
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+```
+
+Or with `uv`:
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python --prerelease=allow -r requirements.txt
+```
+
+To run ICEfinder with the local virtual environment without activating it:
+```bash
+./run.sh -i example/input_demo/CP003200.1.gb -t Single
+```
+
+Convenience wrappers for the bundled demos:
+```bash
+./run-single-demo.sh example/input_demo/CP003200.1.gb
+./run-metagenome-demo.sh example/input_demo/SRS146999.fna
+```
+
+The wrappers keep the type fixed, but the input file is required:
+```bash
+./run-single-demo.sh path/to/genome.gb
+./run-metagenome-demo.sh path/to/metagenome.fna
+```
+
 To test and get familiar with the ICEfinder, you can test the demo files we provide in the 'example/input_demo' directory,
 ```bash
-run `python ICEfinder2.py -i example/input_demo/file -t Single/Metagenome`. You can also compare your output in the 'result'
+run `python3 ICEfinder2.py -i example/input_demo/file -t Single/Metagenome`. You can also compare your output in the 'result'
 ```
 to the results in the directory 'example/result_demo'.
 
